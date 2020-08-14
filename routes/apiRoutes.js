@@ -5,6 +5,7 @@
 // ===============================================================================
 
 var noteData = require("../db/db");
+const fs = require("fs");
 
 // ===============================================================================
 // ROUTING
@@ -35,6 +36,20 @@ module.exports = function(app) {
     // req.body is available since we're using the body parsing middleware
     
     // Save new note here 
+    let maxID = 0;
+    noteData.forEach(note => {
+      if(note.id > maxID)
+        maxID = note.id;
+    });
+
+    let note = {"id": maxID+1, "title": req.body.title, "text": req.body.text}
+    noteData.push(note);
+    fs.writeFileSync("db/db.json", JSON.stringify(noteData), "utf-8", (err) => {
+      if(err)
+        console.log(err);
+    });
+
+    res.json(note);
   });
 
   // ---------------------------------------------------------------------------
@@ -44,7 +59,12 @@ module.exports = function(app) {
   app.delete("/api/notes/:id", function(req, res) {
     
     // Delete code here
-
+    let index = noteData.findIndex(note => note.id == req.params.id);
+    noteData.splice(index,1);
+    fs.writeFileSync("db/db.json", JSON.stringify(noteData), "utf-8", (err) => {
+      if(err)
+        console.log(err);
+    });
     res.json({ ok: true });
   });
 };
